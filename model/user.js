@@ -1,7 +1,9 @@
 import sequelize from './../db/db.js';
 import { DataTypes } from 'sequelize';
+import bcrypt from 'bcrypt';
 
-const schema = sequelize.define('user', {
+
+export const schema = sequelize.define('user', {
     userId: {
         type: DataTypes.INTEGER,
         primaryKey: true,
@@ -23,7 +25,33 @@ const schema = sequelize.define('user', {
     }
 })
 
+
+export async function createUser (username, password){
+
+    const user = {username, password}
+    await hashPass(user)
+    await schema.create(user)
+    return user
+};
+
+
+export async function hashPass (user){
+
+    const salt = await bcrypt.genSalt(10);
+    console.log(`Generated salt: ${salt}`)
+
+    user.password = await bcrypt.hash(user.password,salt)
+    console.log(`Bcrypt results: ${user.password}`)
+};
+
+
+export async function validatePass (plainPass, storedPass){
+
+    // plain password is before the hashing, stored pass is salted
+    return await bcrypt.compare(plainPass, storedPass)
+};
+
+
+
 //make sure table is created
 await schema.sync({ alter: true });
-
-export default schema;
